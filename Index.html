@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>قائمة أوردرات القاهرة — جاهزة للشحن</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   CSS Variables — Dark Theme
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --bg:           #0f172a;
+  --bg-card:      #1e293b;
+  --bg-elevated:  #243347;
+  --border:       #334155;
+  --border-light: #2a3a50;
+  --text:         #e2e8f0;
+  --text-sub:     #94a3b8;
+  --text-muted:   #64748b;
+  --accent:       #0ea5e9;
+  --accent-bg:    #0c2a3e;
+  --accent-b:     #0284c7;
+  --green:        #22c55e;
+  --green-bg:     #052e16;
+  --green-b:      #16a34a;
+  --red:          #f87171;
+  --red-bg:       #450a0a;
+  --red-b:        #dc2626;
+  --amber:        #fbbf24;
+  --amber-bg:     #451a03;
+  --amber-b:      #d97706;
+  --purple:       #c084fc;
+  --purple-bg:    #2d1b69;
+  --purple-b:     #9333ea;
+  --teal:         #2dd4bf;
+  --teal-bg:      #042f2e;
+  --teal-b:       #0d9488;
+  --font:         'Noto Sans Arabic', sans-serif;
+  --mono:         'IBM Plex Mono', monospace;
+  --radius:       10px;
+  --shadow:       0 2px 8px rgba(0,0,0,.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background:  var(--bg);
+  color:       var(--text);
+  direction:   rtl;
+  font-size:   14px;
+  min-height:  100vh;
+}
+
+/* ── Toast ──────────────────────────────────────────────── */
+#toastContainer {
+  position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+  z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center;
+  pointer-events: none; min-width: 280px;
+}
+.toast {
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 600;
+  box-shadow: var(--shadow); pointer-events: auto; animation: fadeIn .2s ease;
+  max-width: 420px; text-align: center;
+}
+.toast.ok   { border-color: var(--green-b); color: var(--green); }
+.toast.err  { border-color: var(--red-b);   color: var(--red);   }
+.toast.warn { border-color: var(--amber-b); color: var(--amber); }
+.toast.info { border-color: var(--accent-b); color: var(--accent); }
+@keyframes fadeIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:none; } }
+
+/* ── Modals ─────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-overlay.hidden { display: none; }
+.modal-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 28px; width: 420px; max-width: 95vw;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+.modal-title {
+  font-size: 16px; font-weight: 700; margin-bottom: 20px;
+  color: var(--text); display: flex; align-items: center; gap: 8px;
+}
+.modal-label {
+  font-size: 11px; font-weight: 600; color: var(--text-sub);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px;
+}
+.modal-input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 7px; padding: 9px 12px; color: var(--text);
+  font-family: var(--mono); font-size: 12px; margin-bottom: 14px;
+  outline: none; transition: border-color .15s;
+}
+.modal-input:focus { border-color: var(--accent); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-start; margin-top: 4px; }
+.btn-primary {
+  background: var(--accent); color: #fff; border: none;
+  border-radius: 7px; padding: 9px 20px; font-family: var(--font);
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity .15s;
+}
+.btn-primary:hover { opacity: .85; }
+.btn-ghost {
+  background: none; color: var(--text-sub); border: 1px solid var(--border);
+  border-radius: 7px; padding: 9px 16px; font-family: var(--font);
+  font-size: 13px; cursor: pointer; transition: all .15s;
+}
+.btn-ghost:hover { background: var(--bg-elevated); color: var(--text); }
+
+/* Changelog */
+.cl-list { list-style: none; display: flex; flex-direction: column; gap: 14px; max-height: 60vh; overflow-y: auto; }
+.cl-version { font-weight: 700; font-size: 13px; color: var(--text-sub); font-family: var(--mono); margin-bottom: 6px; }
+.cl-tag { font-size: 10px; font-weight: 700; border-radius: 4px; padding: 2px 7px; margin-left: 6px; }
+.cl-tag.new    { background: #052e16; color: var(--green); border: 1px solid var(--green-b); }
+.cl-tag.fix    { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-b); }
+.cl-tag.change { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-b); }
+
+/* ── Header ─────────────────────────────────────────────── */
+header {
+  background: var(--bg-card); border-bottom: 1px solid var(--border);
+  padding: 0 20px; height: 56px; display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-icon { font-size: 22px; line-height: 1; }
+.header-title {
+  flex: 1; font-size: 15px; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.header-sub {
+  font-size: 11px; color: var(--text-muted); font-family: var(--mono);
+  white-space: nowrap; margin-left: auto;
+}
+.header-actions { display: flex; align-items: center; gap: 6px; }
+.hbtn {
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: 7px; padding: 5px 12px; font-family: var(--font);
+  font-size: 12px; font-weight: 600; color: var(--text-sub); cursor: pointer;
+  transition: all .15s; white-space: nowrap;
+}
+.hbtn:hover { background: var(--bg); color: var(--text); border-color: var(--accent); }
+.hbtn.accent { background: var(--accent-bg); border-color: var(--accent-b); color: var(--accent); }
+
+/* ── App container ──────────────────────────────────────── */
+.app {
+  max-width: 1500px; margin: 0 auto; padding: 16px 20px;
+}
+
+/* ── Tabs ───────────────────────────────────────────────── */
+.tab-bar {
+  display: flex; gap: 4px; margin-bottom: 16px;
+  border-bottom: 1px solid var(--border); padding-bottom: 0;
+}
+.tab-btn {
+  background: none; border: 1px solid transparent; border-bottom: none;
+  border-radius: 8px 8px 0 0; padding: 9px 20px; font-family: var(--font);
+  font-size: 13px; font-weight: 600; color: var(--text-sub); cursor: pointer;
+  transition: all .15s; position: relative; bottom: -1px;
+}
+.tab-btn:hover { color: var(--text); background: var(--bg-card); }
+.tab-btn.active {
+  background: var(--bg-card); border-color: var(--border); border-bottom-color: var(--bg-card);
+  color: var(--teal); font-weight: 700;
+}
+.tab-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--teal-bg); border: 1px solid var(--teal-b);
+  color: var(--teal); font-family: var(--mono); font-size: 10px; font-weight: 700;
+  border-radius: 10px; padding: 1px 7px; margin-right: 6px;
+}
+
+/* ── Toolbar ────────────────────────────────────────────── */
+.toolbar {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.toolbar-info {
+  font-size: 12px; color: var(--text-sub);
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 7px; padding: 5px 12px;
+}
+
+/* ── Buttons ────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 8px; padding: 8px 16px; font-family: var(--font);
+  font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid;
+  transition: all .15s; white-space: nowrap;
+}
+.btn-teal  { background: var(--teal-bg);   border-color: var(--teal-b);   color: var(--teal);   }
+.btn-green { background: var(--green-bg);  border-color: var(--green-b);  color: var(--green);  }
+.btn-red   { background: var(--red-bg);    border-color: var(--red-b);    color: var(--red);    }
+.btn-amber { background: var(--amber-bg);  border-color: var(--amber-b);  color: var(--amber);  }
+.btn-blue  { background: var(--accent-bg); border-color: var(--accent-b); color: var(--accent); }
+.btn:hover { filter: brightness(1.2); }
+.btn:disabled { opacity: .4; cursor: not-allowed; filter: none; }
+
+/* ── Scanner area ───────────────────────────────────────── */
+.scanner-area {
+  background: var(--bg-card); border: 2px solid var(--teal-b);
+  border-radius: var(--radius); padding: 14px 18px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.scanner-area.inactive { border-color: var(--border); opacity: .5; pointer-events: none; }
+.scanner-label { font-size: 13px; font-weight: 700; color: var(--teal); white-space: nowrap; }
+#scanInput {
+  flex: 1; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 7px; padding: 9px 14px; color: var(--text);
+  font-family: var(--mono); font-size: 14px; outline: none; transition: border .15s;
+  direction: ltr; text-align: left;
+}
+#scanInput:focus { border-color: var(--teal); }
+.scanner-hint { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+/* ── Stats cards ────────────────────────────────────────── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  margin-bottom: 14px;
+}
+.stat-card {
+  border-radius: var(--radius); padding: 12px 16px; border: 1px solid;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.stat-card.s-total   { background: var(--bg-card);    border-color: var(--border);  }
+.stat-card.s-ok      { background: var(--green-bg);   border-color: var(--green-b); }
+.stat-card.s-warn    { background: var(--amber-bg);   border-color: var(--amber-b); }
+.stat-card.s-pending { background: var(--accent-bg);  border-color: var(--accent-b); }
+.stat-card.s-missing { background: var(--red-bg);     border-color: var(--red-b);   }
+.stat-num {
+  font-family: var(--mono); font-size: 28px; font-weight: 700; line-height: 1;
+}
+.stat-card.s-total   .stat-num { color: var(--text); }
+.stat-card.s-ok      .stat-num { color: var(--green); }
+.stat-card.s-warn    .stat-num { color: var(--amber); }
+.stat-card.s-pending .stat-num { color: var(--accent); }
+.stat-card.s-missing .stat-num { color: var(--red); }
+.stat-lbl { font-size: 12px; font-weight: 600; color: var(--text-sub); text-align: center; }
+
+/* Progress bar */
+.progress-wrap {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 99px; height: 10px; overflow: hidden; margin-bottom: 14px; position: relative;
+}
+.progress-bar {
+  height: 100%; background: var(--green); transition: width .3s ease;
+  border-radius: 99px;
+}
+.progress-text {
+  position: absolute; right: 50%; transform: translateX(50%); top: -18px;
+  font-size: 11px; font-family: var(--mono); color: var(--text-sub);
+}
+
+/* ── Table ──────────────────────────────────────────────── */
+.table-wrap {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+
+thead tr th {
+  background: var(--bg); color: var(--text-sub);
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  padding: 8px 10px; border-bottom: 1px solid var(--border);
+  white-space: nowrap; text-align: center;
+}
+thead tr.subheader-row th {
+  background: #0d1b2e; color: var(--text-muted);
+  font-size: 10px; font-weight: 600; padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+}
+thead tr.filter-row th {
+  background: #0b1828; padding: 5px 6px;
+  border-bottom: 2px solid var(--teal-b);
+}
+.group-header {
+  background: #0a1520 !important;
+  border-right: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+.filter-input {
+  width: 100%; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 5px; padding: 5px 8px; color: var(--text);
+  font-family: var(--font); font-size: 12px; outline: none;
+  transition: border-color .15s;
+}
+.filter-input:focus { border-color: var(--teal); }
+.filter-select {
+  width: 100%; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 5px; padding: 5px 6px; color: var(--text);
+  font-family: var(--font); font-size: 12px; outline: none;
+  cursor: pointer; transition: border-color .15s;
+}
+.filter-select:focus { border-color: var(--teal); }
+
+tbody tr { border-bottom: 1px solid var(--border-light); transition: background .1s; }
+tbody tr:hover { background: var(--bg-elevated); }
+tbody td { padding: 9px 10px; text-align: center; font-size: 13px; }
+tbody tr.row-ok      { background: rgba(34, 197, 94, .08); }
+tbody tr.row-ok:hover { background: rgba(34, 197, 94, .14); }
+tbody tr.row-missing  { background: rgba(248, 113, 113, .08); }
+tbody tr.row-missing:hover { background: rgba(248, 113, 113, .14); }
+tbody tr.row-already  { background: rgba(14, 165, 233, .06); }
+
+/* Order link */
+.order-link {
+  color: var(--accent); font-family: var(--mono); font-size: 13px; font-weight: 600;
+  text-decoration: none;
+}
+.order-link:hover { text-decoration: underline; color: var(--teal); }
+
+/* Address cell */
+.addr-cell { text-align: right !important; max-width: 200px; }
+.addr-city { font-weight: 700; color: var(--text); }
+.addr-line { font-size: 11px; color: var(--text-sub); }
+
+/* Type badges */
+.badge {
+  display: inline-block; font-size: 11px; font-weight: 700; border-radius: 5px;
+  padding: 3px 8px; border: 1px solid; white-space: nowrap;
+}
+.badge-s1 { background: var(--accent-bg); border-color: var(--accent-b); color: var(--accent); }
+.badge-s2 { background: var(--purple-bg); border-color: var(--purple-b); color: var(--purple); }
+
+/* Day label cell */
+.day-cell { font-size: 12px; color: var(--text-sub); min-width: 110px; }
+.day-today  { color: var(--green); font-weight: 700; }
+.day-yesterday { color: var(--amber); }
+.date-cell { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+.time-cell { font-family: var(--mono); font-size: 12px; white-space: nowrap; color: var(--text-sub); }
+
+/* Audit status cell */
+.audit-cell { font-size: 18px; font-weight: 700; min-width: 60px; }
+.audit-cell.ok      { color: var(--green); }
+.audit-cell.missing { color: var(--red); }
+.audit-cell.pending { color: var(--text-muted); }
+
+/* Empty state */
+.empty-state {
+  text-align: center !important; padding: 48px !important;
+  color: var(--text-muted); font-size: 14px;
+}
+
+/* ── Unexpected section ─────────────────────────────────── */
+.unexpected-section {
+  margin-top: 16px; background: var(--bg-card);
+  border: 1px solid var(--amber-b); border-radius: var(--radius); overflow: hidden;
+}
+.unexpected-header {
+  background: var(--amber-bg); padding: 10px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 700; font-size: 13px; color: var(--amber);
+}
+.unexpected-count {
+  background: var(--amber-b); color: #000; border-radius: 10px;
+  padding: 1px 8px; font-family: var(--mono); font-size: 11px; font-weight: 700;
+}
+
+/* ── Lookup results ─────────────────────────────────────── */
+.lookup-card {
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px; margin: 8px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.lookup-name { font-family: var(--mono); font-weight: 700; color: var(--accent); font-size: 14px; }
+.lookup-row { font-size: 12px; color: var(--text-sub); }
+.lookup-row span { color: var(--text); font-weight: 600; }
+.lookup-status-ok   { color: var(--green)  !important; }
+.lookup-status-warn { color: var(--amber)  !important; }
+.lookup-not-found { color: var(--red); font-size: 12px; font-style: italic; padding: 6px 14px 10px; }
+
+/* ── Not configured state ───────────────────────────────── */
+.not-configured {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; padding: 80px 20px; text-align: center;
+}
+.not-configured .icon { font-size: 48px; }
+.not-configured h2 { font-size: 18px; font-weight: 700; }
+.not-configured p { font-size: 14px; color: var(--text-sub); max-width: 360px; }
+
+/* Loading */
+.loading-state {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 60px 20px; text-align: center; color: var(--text-sub);
+}
+.spinner {
+  width: 32px; height: 32px; border: 3px solid var(--border);
+  border-top-color: var(--teal); border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Toast container -->
+<div id="toastContainer"></div>
+
+<!-- Settings modal -->
+<div class="modal-overlay hidden" id="settingsModal">
+  <div class="modal-box">
+    <div class="modal-title">⚙️ الإعدادات</div>
+    <div class="modal-label">Worker URL</div>
+    <input class="modal-input" id="inpWorkerUrl" type="url" dir="ltr" autocomplete="off">
+    <div class="modal-label">Worker Secret</div>
+    <input class="modal-input" id="inpWorkerSecret" type="password" dir="ltr" autocomplete="off">
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveSettings()">حفظ</button>
+      <button class="btn-ghost"   onclick="closeSettings()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Changelog modal -->
+<div class="modal-overlay hidden" id="changelogModal">
+  <div class="modal-box">
+    <div class="modal-title">📋 سجل التغييرات</div>
+    <ul class="cl-list">
+      <li>
+        <div class="cl-version">v1.0.0 — 20-05-2026</div>
+        <div><span class="cl-tag new">جديد</span>إطلاق الأداة — قائمة الأوردرات الجاهزة للشحن</div>
+        <div style="margin-top:6px"><span class="cl-tag new">جديد</span>وضع المراجعة بالسكانر مع إحصائيات حية</div>
+        <div style="margin-top:6px"><span class="cl-tag new">جديد</span>تصدير Excel للقائمة ونتائج المراجعة</div>
+        <div style="margin-top:6px"><span class="cl-tag new">جديد</span>استعلام فوري عن الأوردرات الغير متوقعة</div>
+      </li>
+    </ul>
+    <div class="modal-actions" style="margin-top:18px;">
+      <button class="btn-ghost" onclick="closeChangelog()">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="header-icon">🚚</div>
+  <div class="header-title">قائمة أوردرات القاهرة — جاهزة للشحن</div>
+  <div class="header-sub" id="lastFetchedDisplay" style="display:none;"></div>
+  <div class="header-actions">
+    <button class="hbtn" id="btnRefresh" onclick="loadOrders()">↻ تحديث</button>
+    <button class="hbtn" onclick="openChangelog()">v1.0.0 📋</button>
+    <button class="hbtn" onclick="openSettings()">⚙️ الإعدادات</button>
+  </div>
+</header>
+
+<!-- App -->
+<div class="app">
+
+  <!-- Not configured -->
+  <div class="not-configured" id="notConfigured">
+    <div class="icon">⚙️</div>
+    <h2>الأداة تحتاج إعداد</h2>
+    <p>أدخل بيانات الاتصال بالـ Worker أولاً لتبدأ في استخدام الأداة</p>
+    <button class="btn btn-teal" onclick="openSettings()">⚙️ فتح الإعدادات</button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" id="loadingState" style="display:none;">
+    <div class="spinner"></div>
+    <div>جاري تحميل أوردرات Ready...</div>
+    <div style="font-size:11px;color:var(--text-muted);">قد يستغرق هذا بضع ثوانٍ</div>
+  </div>
+
+  <!-- Main content -->
+  <div id="mainContent" style="display:none;">
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tabListBtn" onclick="switchTab('list')">
+        📋 القائمة <span class="tab-count" id="tabListCount">0</span>
+      </button>
+      <button class="tab-btn" id="tabAuditBtn" onclick="switchTab('audit')">
+        🔍 المراجعة
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         TAB 1: القائمة
+         ══════════════════════════════════════════════════════ -->
+    <div id="viewList">
+      <div class="toolbar">
+        <div class="toolbar-info" id="listInfo">0 أوردر</div>
+        <div style="flex:1;"></div>
+        <button class="btn btn-teal" onclick="exportExcel(false)">⬇️ تصدير Excel</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table id="listTable">
+            <thead>
+              <tr>
+                <th rowspan="2">رقم الأوردر</th>
+                <th rowspan="2">العنوان</th>
+                <th rowspan="2">النوع</th>
+                <th colspan="3" class="group-header">⏱️ وقت الطباعة</th>
+                <th colspan="3" class="group-header">📦 وقت التغليف</th>
+              </tr>
+              <tr class="subheader-row">
+                <th>اليوم</th><th>التاريخ</th><th>الوقت</th>
+                <th>اليوم</th><th>التاريخ</th><th>الوقت</th>
+              </tr>
+              <tr class="filter-row">
+                <th><input class="filter-input" id="fOrder"    oninput="applyFilters()" placeholder="بحث..."></th>
+                <th><input class="filter-input" id="fAddr"     oninput="applyFilters()" placeholder="بحث..."></th>
+                <th>
+                  <select class="filter-select" id="fType" onchange="applyFilters()">
+                    <option value="">الكل</option>
+                    <option value="S1">عادي</option>
+                    <option value="S2">استبدال/استرجاع</option>
+                  </select>
+                </th>
+                <th colspan="3">
+                  <select class="filter-select" id="fPrintDay" onchange="applyFilters()">
+                    <option value="">الكل</option>
+                  </select>
+                </th>
+                <th colspan="3">
+                  <select class="filter-select" id="fPackDay" onchange="applyFilters()">
+                    <option value="">الكل</option>
+                  </select>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="listBody">
+              <tr><td colspan="9" class="empty-state">لا توجد بيانات</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         TAB 2: المراجعة
+         ══════════════════════════════════════════════════════ -->
+    <div id="viewAudit" style="display:none;">
+
+      <!-- Audit controls -->
+      <div class="toolbar" id="auditControls">
+        <button class="btn btn-green"  id="btnStartAudit" onclick="startAudit()">▶ بدء المراجعة</button>
+        <button class="btn btn-red"    id="btnEndAudit"   onclick="endAudit()"   style="display:none;">⏹ إنهاء المراجعة</button>
+        <button class="btn btn-ghost"  id="btnResetAudit" onclick="resetAudit()" style="display:none;">↺ إعادة تعيين</button>
+        <div style="flex:1;"></div>
+        <button class="btn btn-teal"   id="btnExportAudit" onclick="exportExcel(true)" style="display:none;">⬇️ تصدير Excel</button>
+      </div>
+
+      <!-- Scanner -->
+      <div class="scanner-area inactive" id="scannerArea">
+        <div class="scanner-label">📷 سكان:</div>
+        <input type="text" id="scanInput" placeholder="اسحب باركود الأوردر هنا..." dir="ltr" autocomplete="off">
+        <div class="scanner-hint">السكانر أو يدوي ثم Enter</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card s-total">
+          <div class="stat-num" id="statTotal">0</div>
+          <div class="stat-lbl">إجمالي القائمة</div>
+        </div>
+        <div class="stat-card s-ok">
+          <div class="stat-num" id="statConfirmed">0</div>
+          <div class="stat-lbl">✅ مضبوطة</div>
+        </div>
+        <div class="stat-card s-warn">
+          <div class="stat-num" id="statUnexpected">0</div>
+          <div class="stat-lbl">⚠️ خارج القائمة</div>
+        </div>
+        <div class="stat-card s-pending" id="pendingCard">
+          <div class="stat-num" id="statPending">0</div>
+          <div class="stat-lbl">⏳ لم تُفحص</div>
+        </div>
+        <div class="stat-card s-missing" id="missingCard" style="display:none;">
+          <div class="stat-num" id="statMissing">0</div>
+          <div class="stat-lbl">❌ ضائعة</div>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div id="progressWrap" style="display:none; margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <div style="font-size:12px;color:var(--text-sub);">تقدم المراجعة</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--green);" id="progressText">0%</div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar" id="progressBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Audit table -->
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table id="auditTable">
+            <thead>
+              <tr>
+                <th rowspan="2">الحالة</th>
+                <th rowspan="2">رقم الأوردر</th>
+                <th rowspan="2">العنوان</th>
+                <th rowspan="2">النوع</th>
+                <th colspan="3" class="group-header">⏱️ وقت الطباعة</th>
+                <th colspan="3" class="group-header">📦 وقت التغليف</th>
+              </tr>
+              <tr class="subheader-row">
+                <th>اليوم</th><th>التاريخ</th><th>الوقت</th>
+                <th>اليوم</th><th>التاريخ</th><th>الوقت</th>
+              </tr>
+            </thead>
+            <tbody id="auditBody">
+              <tr><td colspan="10" class="empty-state">ابدأ المراجعة لعرض النتائج</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Unexpected orders section -->
+      <div class="unexpected-section" id="unexpectedSection" style="display:none;">
+        <div class="unexpected-header">
+          <span>⚠️ أوردرات موجودة على الأرض ولكن خارج القائمة</span>
+          <span class="unexpected-count" id="unexpectedCount">0</span>
+          <div style="flex:1;"></div>
+          <button class="btn btn-amber" id="btnLookup" onclick="lookupUnexpected()" style="padding:5px 12px; font-size:12px;">
+            🔍 استعلام عن الحالة الفعلية
+          </button>
+        </div>
+        <div id="unexpectedList"></div>
+      </div>
+
+    </div><!-- /viewAudit -->
+
+  </div><!-- /mainContent -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  Constants
+// ═══════════════════════════════════════════════════════════
+const LS_URL    = 'ready_to_ship_worker_url';
+const LS_SECRET = 'ready_to_ship_worker_secret';
+const ADMIN_BASE = 'https://admin.shopify.com/store/6c7e1a-53';
+const DAY_NAMES  = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+// ═══════════════════════════════════════════════════════════
+//  State
+// ═══════════════════════════════════════════════════════════
+let allOrders      = [];      // raw from Worker
+let filteredOrders = [];      // after filters
+let fetchedAt      = null;
+let activeTab      = 'list';
+
+// Audit state
+let auditStarted   = false;
+let auditEnded     = false;
+let confirmedIds   = new Set();   // order IDs scanned + found
+let unexpectedScans = [];          // [{ name, lookupData }]
+
+// ═══════════════════════════════════════════════════════════
+//  Config helpers
+// ═══════════════════════════════════════════════════════════
+function getConfig() {
+  return {
+    url:    (localStorage.getItem(LS_URL)    || '').replace(/\/$/, ''),
+    secret:  localStorage.getItem(LS_SECRET) || '',
+  };
+}
+function isConfigured() {
+  const c = getConfig();
+  return !!(c.url && c.secret);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  API helper
+// ═══════════════════════════════════════════════════════════
+async function apiFetch(action, method = 'GET', body = null) {
+  const { url, secret } = getConfig();
+  if (!url || !secret) throw new Error('الأداة غير مُعدَّة — افتح الإعدادات');
+
+  const opts = {
+    method,
+    headers: {
+      'Authorization': `Bearer ${secret}`,
+      'Content-Type':  'application/json',
+    },
+  };
+  if (body) opts.body = JSON.stringify(body);
+
+  const r = await fetch(`${url}?action=${action}`, opts);
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || `خطأ HTTP ${r.status}`);
+  return data;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Time helpers (Cairo UTC+3)
+// ═══════════════════════════════════════════════════════════
+function toCairo(iso) {
+  return new Date(new Date(iso).getTime() + 3 * 60 * 60 * 1000);
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = toCairo(iso);
+  const p = n => String(n).padStart(2, '0');
+  return `📅 ${p(d.getUTCDate())}-${p(d.getUTCMonth()+1)}-${d.getUTCFullYear()}`;
+}
+
+function formatTime(iso) {
+  if (!iso) return '—';
+  const d = toCairo(iso);
+  const p = n => String(n).padStart(2, '0');
+  let h = d.getUTCHours();
+  const ampm = h >= 12 ? 'مساءً' : 'صباحاً';
+  h = h % 12 || 12;
+  return `🕐 ${p(h)}:${p(d.getUTCMinutes())} ${ampm}`;
+}
+
+function getRelativeDayLabel(iso) {
+  if (!iso) return '—';
+  const orderD = toCairo(iso);
+  const nowD   = toCairo(new Date().toISOString());
+  const oMid   = Date.UTC(orderD.getUTCFullYear(), orderD.getUTCMonth(), orderD.getUTCDate());
+  const nMid   = Date.UTC(nowD.getUTCFullYear(),   nowD.getUTCMonth(),   nowD.getUTCDate());
+  const diff   = Math.round((nMid - oMid) / 86400000);
+  const day    = DAY_NAMES[orderD.getUTCDay()];
+  if (diff === 0) return `اليوم ${day}`;
+  if (diff === 1) return `أمس ${day}`;
+  if (diff === 2) return `أول أمس ${day}`;
+  if (diff <= 10) return `منذ ${diff} أيام ${day}`;
+  return `منذ ${diff} يوم ${day}`;
+}
+
+function getDayClass(iso) {
+  if (!iso) return '';
+  const orderD = toCairo(iso);
+  const nowD   = toCairo(new Date().toISOString());
+  const oMid   = Date.UTC(orderD.getUTCFullYear(), orderD.getUTCMonth(), orderD.getUTCDate());
+  const nMid   = Date.UTC(nowD.getUTCFullYear(),   nowD.getUTCMonth(),   nowD.getUTCDate());
+  const diff   = Math.round((nMid - oMid) / 86400000);
+  if (diff === 0) return 'day-today';
+  if (diff === 1) return 'day-yesterday';
+  return '';
+}
+
+function formatLastFetched(iso) {
+  const d = toCairo(iso);
+  const p = n => String(n).padStart(2, '0');
+  let h = d.getUTCHours();
+  const ampm = h >= 12 ? 'مساءً' : 'صباحاً';
+  h = h % 12 || 12;
+  return `آخر تحديث: ${p(d.getUTCDate())}-${p(d.getUTCMonth()+1)}-${d.getUTCFullYear()} ${p(h)}:${p(d.getUTCMinutes())} ${ampm}`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Data loading
+// ═══════════════════════════════════════════════════════════
+async function loadOrders() {
+  if (!isConfigured()) {
+    document.getElementById('notConfigured').style.display = '';
+    document.getElementById('loadingState').style.display  = 'none';
+    document.getElementById('mainContent').style.display   = 'none';
+    return;
+  }
+
+  document.getElementById('notConfigured').style.display = 'none';
+  document.getElementById('loadingState').style.display  = '';
+  document.getElementById('mainContent').style.display   = 'none';
+  document.getElementById('btnRefresh').disabled = true;
+  document.getElementById('btnRefresh').textContent = '...';
+
+  try {
+    const data = await apiFetch('get_ready_orders');
+    allOrders = data.orders || [];
+    fetchedAt = data.fetchedAt || new Date().toISOString();
+
+    document.getElementById('lastFetchedDisplay').style.display = '';
+    document.getElementById('lastFetchedDisplay').textContent   = formatLastFetched(fetchedAt);
+
+    // Reset audit when data is refreshed
+    resetAuditState();
+    populateDayFilters();
+    applyFilters();
+
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('mainContent').style.display  = '';
+
+    showToast(`تم تحميل ${allOrders.length} أوردر Ready ✅`, 'ok');
+  } catch (e) {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('notConfigured').style.display = '';
+    showToast('خطأ: ' + e.message, 'err');
+  } finally {
+    document.getElementById('btnRefresh').disabled = false;
+    document.getElementById('btnRefresh').textContent = '↻ تحديث';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Filters
+// ═══════════════════════════════════════════════════════════
+function applyFilters() {
+  const order    = document.getElementById('fOrder').value.trim().toLowerCase();
+  const addr     = document.getElementById('fAddr').value.trim().toLowerCase();
+  const type     = document.getElementById('fType').value;
+  const printDay = document.getElementById('fPrintDay').value;
+  const packDay  = document.getElementById('fPackDay').value;
+
+  filteredOrders = allOrders.filter(o => {
+    if (order    && !o.name.toLowerCase().includes(order)) return false;
+    if (addr) {
+      const addrStr = `${o.address?.city || ''} ${o.address?.address1 || ''}`.toLowerCase();
+      if (!addrStr.includes(addr)) return false;
+    }
+    if (type     && o.orderType !== type) return false;
+    if (printDay && getRelativeDayLabel(o.printingTime) !== printDay) return false;
+    if (packDay  && getRelativeDayLabel(o.packingDateTime) !== packDay) return false;
+    return true;
+  });
+
+  renderListTable();
+  renderAuditTable();
+  updateStats();
+  updateTabLabel();
+
+  const info = document.getElementById('listInfo');
+  info.textContent = filteredOrders.length === allOrders.length
+    ? `${allOrders.length} أوردر`
+    : `${filteredOrders.length} من ${allOrders.length} أوردر`;
+}
+
+function populateDayFilters() {
+  const printDays = [...new Set(allOrders.map(o => getRelativeDayLabel(o.printingTime)).filter(d => d !== '—'))];
+  const packDays  = [...new Set(allOrders.map(o => getRelativeDayLabel(o.packingDateTime)).filter(d => d !== '—'))];
+
+  function populate(selectId, days) {
+    const sel = document.getElementById(selectId);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">الكل</option>';
+    days.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d; opt.textContent = d;
+      sel.appendChild(opt);
+    });
+    sel.value = days.includes(cur) ? cur : '';
+  }
+  populate('fPrintDay', printDays);
+  populate('fPackDay',  packDays);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Render helpers
+// ═══════════════════════════════════════════════════════════
+function orderRow(o, includeAuditCol = false, auditStatus = null) {
+  const addr = o.address
+    ? `<div class="addr-city">${o.address.city || '—'}</div><div class="addr-line">${o.address.address1 || ''}</div>`
+    : '—';
+  const badge = o.orderType === 'S2'
+    ? '<span class="badge badge-s2">استبدال / استرجاع</span>'
+    : '<span class="badge badge-s1">عادي</span>';
+  const link = `${ADMIN_BASE}/orders/${o.numericId}`;
+
+  let auditCell = '';
+  let rowClass  = '';
+  if (includeAuditCol) {
+    if (auditStatus === 'ok') {
+      auditCell = '<td class="audit-cell ok">✅</td>';
+      rowClass  = 'row-ok';
+    } else if (auditStatus === 'missing') {
+      auditCell = '<td class="audit-cell missing">❌</td>';
+      rowClass  = 'row-missing';
+    } else if (auditStatus === 'already') {
+      auditCell = '<td class="audit-cell ok" title="تم مسحه مسبقاً">✅✅</td>';
+      rowClass  = 'row-already';
+    } else {
+      auditCell = '<td class="audit-cell pending">⏳</td>';
+    }
+  }
+
+  const printDayClass = getDayClass(o.printingTime);
+  const packDayClass  = getDayClass(o.packingDateTime);
+
+  return `<tr class="${rowClass}">
+    ${auditCell}
+    <td><a href="${link}" target="_blank" class="order-link">${o.name}</a></td>
+    <td class="addr-cell">${addr}</td>
+    <td>${badge}</td>
+    <td class="day-cell ${printDayClass}">${getRelativeDayLabel(o.printingTime)}</td>
+    <td class="date-cell">${formatDate(o.printingTime)}</td>
+    <td class="time-cell">${formatTime(o.printingTime)}</td>
+    <td class="day-cell ${packDayClass}">${getRelativeDayLabel(o.packingDateTime)}</td>
+    <td class="date-cell">${formatDate(o.packingDateTime)}</td>
+    <td class="time-cell">${formatTime(o.packingDateTime)}</td>
+  </tr>`;
+}
+
+function renderListTable() {
+  const tbody = document.getElementById('listBody');
+  if (!filteredOrders.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state">لا توجد أوردرات تطابق الفلتر</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filteredOrders.map(o => orderRow(o, false)).join('');
+}
+
+function renderAuditTable() {
+  const tbody = document.getElementById('auditBody');
+  if (!filteredOrders.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-state">لا توجد أوردرات</td></tr>';
+    return;
+  }
+
+  if (!auditStarted) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-state">اضغط "بدء المراجعة" للبدء</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filteredOrders.map(o => {
+    let status = null;
+    if (confirmedIds.has(o.id)) {
+      status = 'ok';
+    } else if (auditEnded) {
+      status = 'missing';
+    }
+    return orderRow(o, true, status);
+  }).join('');
+}
+
+function updateTabLabel() {
+  document.getElementById('tabListCount').textContent = filteredOrders.length;
+}
+
+function updateStats() {
+  const total     = filteredOrders.length;
+  const confirmed = filteredOrders.filter(o => confirmedIds.has(o.id)).length;
+  const unexpected = unexpectedScans.length;
+  const pending   = auditEnded ? 0 : (total - confirmed);
+  const missing   = auditEnded ? (total - confirmed) : 0;
+
+  document.getElementById('statTotal').textContent     = total;
+  document.getElementById('statConfirmed').textContent = confirmed;
+  document.getElementById('statUnexpected').textContent = unexpected;
+  document.getElementById('statPending').textContent   = pending;
+  document.getElementById('statMissing').textContent   = missing;
+
+  document.getElementById('pendingCard').style.display = auditEnded ? 'none' : '';
+  document.getElementById('missingCard').style.display = auditEnded ? '' : 'none';
+
+  // Progress bar
+  if (auditStarted && total > 0) {
+    const pct = Math.round((confirmed / total) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent = pct + '%';
+    document.getElementById('progressWrap').style.display = '';
+  } else {
+    document.getElementById('progressWrap').style.display = 'none';
+  }
+}
+
+function renderUnexpected() {
+  const section = document.getElementById('unexpectedSection');
+  const list    = document.getElementById('unexpectedList');
+  document.getElementById('unexpectedCount').textContent = unexpectedScans.length;
+
+  if (!unexpectedScans.length) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = '';
+
+  list.innerHTML = unexpectedScans.map(u => {
+    if (!u.lookupData) {
+      return `<div class="lookup-not-found">📦 ${u.name} — لم يتم الاستعلام بعد</div>`;
+    }
+    if (!u.lookupData.found) {
+      return `<div class="lookup-card">
+        <div class="lookup-name">${u.name}</div>
+        <div class="lookup-row" style="color:var(--red);">⚠️ الأوردر غير موجود في شوبيفاي</div>
+      </div>`;
+    }
+    const d = u.lookupData;
+    const s1Color = ['Ready','Shipped','Delivered'].includes(d.s1Status) ? 'lookup-status-ok' : 'lookup-status-warn';
+    const s2Color = ['Ready','Shipped','Delivered'].includes(d.s2Status) ? 'lookup-status-ok' : 'lookup-status-warn';
+    const link    = `${ADMIN_BASE}/orders/${d.numericId}`;
+    return `<div class="lookup-card">
+      <div class="lookup-name"><a href="${link}" target="_blank" class="order-link">${d.name}</a></div>
+      <div class="lookup-row">المدينة: <span>${d.city}</span> &nbsp;|&nbsp; مالية: <span>${d.financial}</span> &nbsp;|&nbsp; شحن: <span>${d.fulfillment}</span></div>
+      <div class="lookup-row">S1 (manual_status): <span class="${s1Color}">${d.s1Status || '—'}</span></div>
+      <div class="lookup-row">S2 (status_2_r_e): <span class="${s2Color}">${d.s2Status || '—'}</span></div>
+      ${d.tags ? `<div class="lookup-row">Tags: <span style="font-size:11px;color:var(--text-muted)">${d.tags}</span></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Tab switching
+// ═══════════════════════════════════════════════════════════
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('viewList').style.display  = tab === 'list'  ? '' : 'none';
+  document.getElementById('viewAudit').style.display = tab === 'audit' ? '' : 'none';
+  document.getElementById('tabListBtn').classList.toggle('active',  tab === 'list');
+  document.getElementById('tabAuditBtn').classList.toggle('active', tab === 'audit');
+  if (tab === 'audit') renderAuditTable();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Audit flow
+// ═══════════════════════════════════════════════════════════
+function startAudit() {
+  auditStarted = true;
+  auditEnded   = false;
+  confirmedIds = new Set();
+  unexpectedScans = [];
+
+  document.getElementById('btnStartAudit').style.display = 'none';
+  document.getElementById('btnEndAudit').style.display   = '';
+  document.getElementById('btnResetAudit').style.display = '';
+  document.getElementById('scannerArea').classList.remove('inactive');
+  document.getElementById('scanInput').focus();
+
+  renderAuditTable();
+  renderUnexpected();
+  updateStats();
+  showToast('تم بدء المراجعة — ابدأ بالسكان 📷', 'info');
+}
+
+function endAudit() {
+  if (!auditStarted) return;
+  auditEnded = true;
+
+  document.getElementById('btnEndAudit').style.display    = 'none';
+  document.getElementById('scannerArea').classList.add('inactive');
+  document.getElementById('btnExportAudit').style.display = '';
+
+  renderAuditTable();
+  updateStats();
+
+  const total   = filteredOrders.length;
+  const ok      = filteredOrders.filter(o => confirmedIds.has(o.id)).length;
+  const missing = total - ok;
+  const warn    = unexpectedScans.length;
+
+  showToast(`انتهت المراجعة ✅ ${ok} مضبوط | ❌ ${missing} ضائع | ⚠️ ${warn} خارج القائمة`, 'info');
+}
+
+function resetAudit() {
+  resetAuditState();
+  renderAuditTable();
+  renderUnexpected();
+  updateStats();
+}
+
+function resetAuditState() {
+  auditStarted = false;
+  auditEnded   = false;
+  confirmedIds = new Set();
+  unexpectedScans = [];
+
+  document.getElementById('btnStartAudit').style.display  = '';
+  document.getElementById('btnEndAudit').style.display    = 'none';
+  document.getElementById('btnResetAudit').style.display  = 'none';
+  document.getElementById('btnExportAudit').style.display = 'none';
+  document.getElementById('scannerArea').classList.add('inactive');
+  document.getElementById('unexpectedSection').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'none';
+}
+
+async function lookupUnexpected() {
+  const pending = unexpectedScans.filter(u => !u.lookupData);
+  if (!pending.length) return;
+
+  const btn = document.getElementById('btnLookup');
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري الاستعلام...';
+
+  try {
+    const names = pending.map(u => u.name);
+    const data  = await apiFetch('lookup_orders', 'POST', { names });
+
+    // Map results back to unexpectedScans
+    const resultMap = {};
+    (data.orders || []).forEach(r => { resultMap[r.name] = r; });
+
+    unexpectedScans.forEach(u => {
+      if (!u.lookupData && resultMap[u.name]) {
+        u.lookupData = resultMap[u.name];
+      }
+    });
+
+    renderUnexpected();
+    showToast('تم استعلام الحالة الفعلية لجميع الأوردرات ✅', 'ok');
+  } catch (e) {
+    showToast('خطأ في الاستعلام: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 استعلام عن الحالة الفعلية';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Scanner gun input — CRITICAL PATTERN
+//  Listener sets timeout only.
+//  handleScan() reads + clears value + processes.
+// ═══════════════════════════════════════════════════════════
+let scanTimer;
+const scanInputEl = document.getElementById('scanInput');
+
+scanInputEl.addEventListener('input', () => {
+  clearTimeout(scanTimer);
+  const gap = scanInputEl.value.length > 3 ? 80 : 400;
+  scanTimer = setTimeout(handleScan, gap < 80 ? 150 : 400);
+});
+
+scanInputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    clearTimeout(scanTimer);
+    handleScan();
+  }
+});
+
+function handleScan() {
+  const val = scanInputEl.value.trim();   // read here
+  scanInputEl.value = '';                  // clear here
+  scanInputEl.focus();
+  if (!val) return;
+  if (!auditStarted || auditEnded) return;
+
+  // Normalize: strip barcode prefix chars, ensure # prefix
+  const rawName = val.replace(/[^#\d]/g, '');
+  const name    = rawName.startsWith('#') ? rawName : '#' + rawName;
+
+  // Search in allOrders (not just filteredOrders — audit should check all)
+  const order = allOrders.find(o => o.name === name);
+
+  if (order) {
+    if (confirmedIds.has(order.id)) {
+      showToast(`${name} — مسحه مسبقاً ✅✅`, 'info');
+      soundDuplicate();
+    } else {
+      confirmedIds.add(order.id);
+      soundFound();
+      showToast(`${name} — موجود ✅`, 'ok');
+    }
+  } else {
+    // Not in the Ready list
+    if (!unexpectedScans.find(u => u.name === name)) {
+      unexpectedScans.push({ name, lookupData: null });
+    }
+    soundNotFound();
+    showToast(`${name} — غير موجود في القائمة ⚠️`, 'warn');
+    renderUnexpected();
+  }
+
+  renderAuditTable();
+  updateStats();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Audio
+// ═══════════════════════════════════════════════════════════
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function beep(freq, dur, type = 'sine', vol = 0.3) {
+  try {
+    const ctx  = getAudioCtx();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + dur);
+  } catch (_) {}
+}
+function soundFound()     { beep(880, 0.12, 'sine', 0.25); }
+function soundNotFound()  { beep(320, 0.3, 'sawtooth', 0.2); setTimeout(() => beep(260, 0.35, 'sawtooth', 0.2), 180); }
+function soundDuplicate() { beep(660, 0.08, 'sine', 0.2); setTimeout(() => beep(660, 0.08, 'sine', 0.2), 120); }
+
+// ═══════════════════════════════════════════════════════════
+//  Excel Export
+// ═══════════════════════════════════════════════════════════
+async function exportExcel(isAudit = false) {
+  if (typeof ExcelJS === 'undefined') {
+    showToast('مكتبة ExcelJS غير محملة', 'err');
+    return;
+  }
+
+  const wb  = new ExcelJS.Workbook();
+  wb.creator = 'EcomModa Ready to Ship';
+  wb.created = new Date();
+
+  // ── Sheet 1: الأوردرات ──────────────────────────────────
+  const ws = wb.addWorksheet('الأوردرات الجاهزة', { views: [{ rightToLeft: true }] });
+
+  const headers = isAudit
+    ? ['الحالة', 'رقم الأوردر', 'المدينة', 'العنوان', 'النوع', 'اليوم (طباعة)', 'تاريخ الطباعة', 'وقت الطباعة', 'مُغلَّف بواسطة', 'اليوم (تغليف)', 'تاريخ التغليف', 'وقت التغليف']
+    : ['رقم الأوردر', 'المدينة', 'العنوان', 'النوع', 'اليوم (طباعة)', 'تاريخ الطباعة', 'وقت الطباعة', 'مُغلَّف بواسطة', 'اليوم (تغليف)', 'تاريخ التغليف', 'وقت التغليف'];
+
+  ws.addRow(headers);
+  ws.getRow(1).font = { bold: true, size: 11 };
+  ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+  ws.getRow(1).font = { bold: true, color: { argb: 'FFE2E8F0' } };
+
+  filteredOrders.forEach(o => {
+    const status = isAudit
+      ? (confirmedIds.has(o.id) ? '✅ مضبوط' : (auditEnded ? '❌ ضائع' : '⏳ لم يُفحص'))
+      : null;
+
+    const row = [
+      ...(isAudit ? [status] : []),
+      o.name,
+      o.address?.city || '—',
+      o.address?.address1 || '—',
+      o.orderType === 'S2' ? 'استبدال/استرجاع' : 'عادي',
+      getRelativeDayLabel(o.printingTime),
+      o.printingTime ? formatDate(o.printingTime).replace('📅 ', '') : '—',
+      o.printingTime ? formatTime(o.printingTime).replace('🕐 ', '') : '—',
+      o.packedBy || '—',
+      getRelativeDayLabel(o.packingDateTime),
+      o.packingDateTime ? formatDate(o.packingDateTime).replace('📅 ', '') : '—',
+      o.packingDateTime ? formatTime(o.packingDateTime).replace('🕐 ', '') : '—',
+    ];
+    ws.addRow(row);
+  });
+
+  // Color audit rows
+  if (isAudit) {
+    ws.eachRow((row, ri) => {
+      if (ri === 1) return;
+      const statusCell = row.getCell(1).value || '';
+      if (statusCell.includes('✅')) {
+        row.eachCell(c => { c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF052E16' } }; });
+      } else if (statusCell.includes('❌')) {
+        row.eachCell(c => { c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF450A0A' } }; });
+      }
+    });
+  }
+
+  ws.columns.forEach(col => { col.width = 18; });
+  ws.getColumn(isAudit ? 2 : 1).width = 12;  // order name
+
+  // ── Sheet 2: الأوردرات الغير متوقعة (if audit) ─────────
+  if (isAudit && unexpectedScans.length) {
+    const ws2 = wb.addWorksheet('خارج القائمة ⚠️', { views: [{ rightToLeft: true }] });
+    ws2.addRow(['رقم الأوردر', 'موجود في شوبيفاي', 'المدينة', 'مالية', 'شحن', 'S1 manual_status', 'S2 status_2_r_e', 'Tags']);
+    ws2.getRow(1).font = { bold: true };
+    ws2.getRow(1).fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF451A03' } };
+    ws2.getRow(1).font = { bold: true, color:{ argb:'FFFBBF24' } };
+
+    unexpectedScans.forEach(u => {
+      const d = u.lookupData;
+      ws2.addRow([
+        u.name,
+        d ? (d.found ? 'نعم' : 'لا') : 'لم يستعلم',
+        d?.city      || '—',
+        d?.financial || '—',
+        d?.fulfillment || '—',
+        d?.s1Status  || '—',
+        d?.s2Status  || '—',
+        d?.tags      || '—',
+      ]);
+    });
+    ws2.columns.forEach(col => { col.width = 18; });
+  }
+
+  // Download
+  const buf  = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const link = document.createElement('a');
+  const now  = toCairo(new Date().toISOString());
+  const p    = n => String(n).padStart(2,'0');
+  const ts   = `${now.getUTCFullYear()}${p(now.getUTCMonth()+1)}${p(now.getUTCDate())}_${p(now.getUTCHours())}${p(now.getUTCMinutes())}`;
+  link.href     = URL.createObjectURL(blob);
+  link.download = `قائمة_القاهرة_${ts}.xlsx`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  showToast('تم تصدير Excel ✅', 'ok');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Settings modal
+// ═══════════════════════════════════════════════════════════
+function openSettings() {
+  document.getElementById('inpWorkerUrl').value    = localStorage.getItem(LS_URL)    || '';
+  document.getElementById('inpWorkerSecret').value = localStorage.getItem(LS_SECRET) || '';
+  document.getElementById('settingsModal').classList.remove('hidden');
+}
+function closeSettings() {
+  document.getElementById('settingsModal').classList.add('hidden');
+}
+function saveSettings() {
+  const url    = document.getElementById('inpWorkerUrl').value.trim().replace(/\/$/, '');
+  const secret = document.getElementById('inpWorkerSecret').value.trim();
+  localStorage.setItem(LS_URL,    url);
+  localStorage.setItem(LS_SECRET, secret);
+  closeSettings();
+  showToast('تم حفظ الإعدادات ✅', 'ok');
+  if (url && secret) loadOrders();
+}
+
+// ── Close modal on overlay click ────────────────────────────
+document.getElementById('settingsModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSettings();
+});
+document.getElementById('changelogModal').addEventListener('click', function(e) {
+  if (e.target === this) closeChangelog();
+});
+
+// ═══════════════════════════════════════════════════════════
+//  Changelog modal
+// ═══════════════════════════════════════════════════════════
+function openChangelog()  { document.getElementById('changelogModal').classList.remove('hidden'); }
+function closeChangelog() { document.getElementById('changelogModal').classList.add('hidden');    }
+
+// ═══════════════════════════════════════════════════════════
+//  Toast
+// ═══════════════════════════════════════════════════════════
+function showToast(msg, type = 'info') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Init
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  if (isConfigured()) {
+    loadOrders();
+  } else {
+    document.getElementById('notConfigured').style.display = '';
+    document.getElementById('loadingState').style.display  = 'none';
+    document.getElementById('mainContent').style.display   = 'none';
+  }
+});
+</script>
+</body>
+</html>
