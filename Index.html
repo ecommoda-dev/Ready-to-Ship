@@ -1264,13 +1264,27 @@ async function lookupUnexpected() {
   const btn = document.getElementById('btnLookup');
   btn.disabled = true; btn.textContent = '⏳ جاري الاستعلام...';
   try {
-    const names   = pending.map(u => u.name);
-    const data    = await apiFetch('lookup_orders', 'POST', { names });
-    const resultMap = {};
-    (data.orders || []).forEach(r => { resultMap[r.name] = r; });
-    unexpectedScans.forEach(u => {
-      if (!u.lookupData && resultMap[u.name]) u.lookupData = resultMap[u.name];
+    // Send both names and numericIds — Worker uses whichever it supports
+    const names      = pending.map(u => u.name);
+    const numericIds = pending.map(u => u.numericId).filter(Boolean);
+    const data = await apiFetch('lookup_orders', 'POST', { names, numericIds });
+
+    // Build result map: key by both name AND numericId for matching
+    const resultByName      = {};
+    const resultByNumericId = {};
+    (data.orders || []).forEach(r => {
+      if (r.name)      resultByName[r.name]           = r;
+      if (r.numericId) resultByNumericId[String(r.numericId)] = r;
     });
+
+    unexpectedScans.forEach(u => {
+      if (u.lookupData) return;
+      // Try match by name first, then by numericId
+      const result = resultByName[u.name]
+        || (u.numericId ? resultByNumericId[String(u.numericId)] : null);
+      if (result) u.lookupData = result;
+    });
+
     renderUnexpected();
     showToast('تم استعلام الحالة الفعلية ✅', 'ok');
   } catch (e) {
@@ -1281,27 +1295,35 @@ async function lookupUnexpected() {
   }
 }
 
-/* ── processOrderName — shared scan/manual logic ── */
+/* ── processOrderName — for orders found in allOrders ── */
 function processOrderName(name) {
   if (!auditStarted || auditEnded) return;
   const order = allOrders.find(o => o.name === name);
-  if (order) {
-    if (confirmedIds.has(order.id)) {
-      showToast(`${name} — مسحه مسبقاً ✅✅`, 'info');
-      soundDuplicate();
-    } else {
-      confirmedIds.add(order.id);
-      soundFound();
-      showToast(`${name} — موجود ✅`, 'ok');
-    }
+  if (!order) return; // should never happen — callers pre-resolve
+  if (confirmedIds.has(order.id)) {
+    showToast(`${name} — مسحه مسبقاً ✅✅`, 'info');
+    soundDuplicate();
   } else {
-    if (!unexpectedScans.find(u => u.name === name)) {
-      unexpectedScans.push({ name, lookupData: null });
-    }
-    soundNotFound();
-    showToast(`${name} — غير موجود في القائمة ⚠️`, 'warn');
-    renderUnexpected();
+    confirmedIds.add(order.id);
+    soundFound();
+    showToast(`${name} — موجود ✅`, 'ok');
   }
+  renderAuditTable();
+  updateStats();
+}
+
+/* ── processOrderNameUnknown — for orders NOT in allOrders ──
+   displayName : what to show (#1234 or #6959895839042)
+   numericId   : Order ID string if known (for Worker lookup), else null
+────────────────────────────────────────────────────── */
+function processOrderNameUnknown(displayName, numericId) {
+  if (!auditStarted || auditEnded) return;
+  if (!unexpectedScans.find(u => u.name === displayName)) {
+    unexpectedScans.push({ name: displayName, numericId: numericId || null, lookupData: null });
+  }
+  soundNotFound();
+  showToast(`${displayName} — غير موجود في القائمة ⚠️`, 'warn');
+  renderUnexpected();
   renderAuditTable();
   updateStats();
 }
@@ -1385,11 +1407,18 @@ function handleScan() {
   if (!val) return;
   if (!auditStarted || auditEnded) return;
 
-  // Scanner gun barcode → typically only digits (strip any scanner prefix chars)
+  // Strip non-digit/non-# chars that some scanners inject, then normalize
   const cleaned = val.replace(/[^#\d]/g, '');
-  const name    = cleaned.startsWith('#') ? cleaned : '#' + cleaned;
+  const parsed  = normalizeOrderInput(cleaned);
+  if (!parsed) return;
 
-  processOrderName(name);
+  const order = resolveOrderFromParsed(parsed);
+  if (order) {
+    processOrderName(order.name);
+  } else {
+    const displayName = getDisplayName(parsed, null);
+    processOrderNameUnknown(displayName, parsed.type === 'numericId' ? parsed.value : null);
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -1417,16 +1446,12 @@ function handleManualAdd() {
   const parsed = normalizeOrderInput(val);
   if (!parsed) { showToast('قيمة غير صالحة', 'warn'); return; }
 
-  // Resolve the actual order object (handles numericId lookup correctly)
   const order = resolveOrderFromParsed(parsed);
-
   if (order) {
-    // Found in allOrders — use the real order.name (e.g. "#1234")
     processOrderName(order.name);
   } else {
-    // Not found — use the best display name for the unexpected list
     const displayName = getDisplayName(parsed, null);
-    processOrderName(displayName);
+    processOrderNameUnknown(displayName, parsed.type === 'numericId' ? parsed.value : null);
   }
 }
 
