@@ -467,6 +467,52 @@ tbody tr.row-already  { background: #eff6ff; }
 .audit-controls-row {
   display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
 }
+
+/* ── Collapsible sections ───────────────────────────── */
+.section-collapse {
+  margin-bottom: 12px; border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+}
+.section-collapse-header {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface-2); padding: 11px 16px;
+  cursor: pointer; user-select: none;
+  transition: background .15s;
+  border-bottom: 1px solid var(--border);
+}
+.section-collapse-header:hover { background: var(--bg); }
+.section-header-ok      { background: var(--green-light); border-color: var(--green-border) !important; }
+.section-header-ok:hover { background: #dcfce7; }
+.section-header-missing { background: var(--red-light);   border-color: var(--red-border)   !important; }
+.section-header-missing:hover { background: #fee2e2; }
+.section-collapse-title {
+  font-size: 13px; font-weight: 700; color: var(--text-primary); flex: 1;
+}
+.section-header-ok      .section-collapse-title { color: var(--green); }
+.section-header-missing .section-collapse-title { color: var(--red);   }
+.section-collapse-count {
+  font-family: var(--mono); font-size: 12px; font-weight: 700;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1px 9px; color: var(--text-secondary);
+}
+.section-header-ok      .section-collapse-count { background: #dcfce7; color: var(--green); border-color: var(--green-border); }
+.section-header-missing .section-collapse-count { background: #fee2e2; color: var(--red);   border-color: var(--red-border);   }
+.section-collapse-chevron {
+  font-size: 11px; color: var(--text-muted); transition: transform .2s;
+}
+.section-collapse-body { transition: none; }
+
+/* Clickable stat cards (after audit ends) */
+.stat-card.clickable {
+  cursor: pointer !important;
+  transition: transform .1s, box-shadow .1s, filter .1s;
+}
+.stat-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.10);
+  filter: brightness(.97);
+}
+.stat-card.clickable:active { transform: translateY(0); }
 </style>
 </head>
 <body>
@@ -652,15 +698,15 @@ tbody tr.row-already  { background: #eff6ff; }
 
       <!-- Stats -->
       <div class="stats-row" id="statsRow">
-        <div class="stat-card s-total">
+        <div class="stat-card s-total" id="cardTotal">
           <div class="stat-num" id="statTotal">0</div>
           <div class="stat-lbl">إجمالي القائمة</div>
         </div>
-        <div class="stat-card s-ok">
+        <div class="stat-card s-ok" id="cardOk" onclick="jumpToSection('ok')" style="cursor:default;">
           <div class="stat-num" id="statConfirmed">0</div>
           <div class="stat-lbl">✅ مضبوطة</div>
         </div>
-        <div class="stat-card s-warn">
+        <div class="stat-card s-warn" id="cardWarn" onclick="jumpToSection('warn')" style="cursor:default;">
           <div class="stat-num" id="statUnexpected">0</div>
           <div class="stat-lbl">⚠️ خارج القائمة</div>
         </div>
@@ -668,7 +714,7 @@ tbody tr.row-already  { background: #eff6ff; }
           <div class="stat-num" id="statPending">0</div>
           <div class="stat-lbl">⏳ لم تُفحص</div>
         </div>
-        <div class="stat-card s-missing" id="missingCard" style="display:none;">
+        <div class="stat-card s-missing" id="missingCard" onclick="jumpToSection('missing')" style="display:none; cursor:default;">
           <div class="stat-num" id="statMissing">0</div>
           <div class="stat-lbl">❌ ضائعة</div>
         </div>
@@ -685,42 +731,111 @@ tbody tr.row-already  { background: #eff6ff; }
         </div>
       </div>
 
-      <!-- Audit table -->
-      <div class="table-wrap">
-        <div class="table-scroll">
-          <table id="auditTable">
-            <thead>
-              <tr>
-                <th rowspan="2">الحالة</th>
-                <th rowspan="2">رقم الأوردر</th>
-                <th rowspan="2">العنوان</th>
-                <th rowspan="2">النوع</th>
-                <th colspan="3" class="group-header">⏱️ وقت الطباعة</th>
-                <th colspan="3" class="group-header">📦 وقت التغليف</th>
-              </tr>
-              <tr class="subheader-row">
-                <th>اليوم</th><th>التاريخ</th><th>الوقت</th>
-                <th>اليوم</th><th>التاريخ</th><th>الوقت</th>
-              </tr>
-            </thead>
-            <tbody id="auditBody">
-              <tr><td colspan="10" class="empty-state">ابدأ المراجعة لعرض النتائج</td></tr>
-            </tbody>
-          </table>
+      <!-- Audit table — collapsible section -->
+      <div class="section-collapse" id="sectionAll">
+        <div class="section-collapse-header" onclick="toggleSection('sectionAll')">
+          <span class="section-collapse-title" id="sectionAllTitle">📋 كل الأوردرات</span>
+          <span class="section-collapse-chevron" id="sectionAllChevron">▲</span>
+        </div>
+        <div class="section-collapse-body" id="sectionAllBody">
+          <div class="table-wrap" style="border-radius:0 0 var(--radius) var(--radius);">
+            <div class="table-scroll">
+              <table id="auditTable">
+                <thead>
+                  <tr>
+                    <th rowspan="2">الحالة</th>
+                    <th rowspan="2">رقم الأوردر</th>
+                    <th rowspan="2">العنوان</th>
+                    <th rowspan="2">النوع</th>
+                    <th colspan="3" class="group-header">⏱️ وقت الطباعة</th>
+                    <th colspan="3" class="group-header">📦 وقت التغليف</th>
+                  </tr>
+                  <tr class="subheader-row">
+                    <th>اليوم</th><th>التاريخ</th><th>الوقت</th>
+                    <th>اليوم</th><th>التاريخ</th><th>الوقت</th>
+                  </tr>
+                </thead>
+                <tbody id="auditBody">
+                  <tr><td colspan="10" class="empty-state">ابدأ المراجعة لعرض النتائج</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Unexpected orders section -->
+      <!-- Confirmed orders — collapsible (shown after audit ends) -->
+      <div class="section-collapse" id="sectionOk" style="display:none;">
+        <div class="section-collapse-header section-header-ok" onclick="toggleSection('sectionOk')">
+          <span class="section-collapse-title">✅ الأوردرات المضبوطة</span>
+          <span class="section-collapse-count" id="sectionOkCount">0</span>
+          <span class="section-collapse-chevron" id="sectionOkChevron">▼</span>
+        </div>
+        <div class="section-collapse-body" id="sectionOkBody" style="display:none;">
+          <div class="table-wrap" style="border-radius:0 0 var(--radius) var(--radius);">
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>رقم الأوردر</th><th>العنوان</th><th>النوع</th>
+                    <th colspan="3" class="group-header">⏱️ وقت الطباعة</th>
+                    <th colspan="3" class="group-header">📦 وقت التغليف</th>
+                  </tr>
+                  <tr class="subheader-row">
+                    <th></th><th></th><th></th>
+                    <th>اليوم</th><th>التاريخ</th><th>الوقت</th>
+                    <th>اليوم</th><th>التاريخ</th><th>الوقت</th>
+                  </tr>
+                </thead>
+                <tbody id="okBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Missing orders — collapsible (shown after audit ends) -->
+      <div class="section-collapse" id="sectionMissing" style="display:none;">
+        <div class="section-collapse-header section-header-missing" onclick="toggleSection('sectionMissing')">
+          <span class="section-collapse-title">❌ الأوردرات الضائعة</span>
+          <span class="section-collapse-count" id="sectionMissingCount">0</span>
+          <span class="section-collapse-chevron" id="sectionMissingChevron">▼</span>
+        </div>
+        <div class="section-collapse-body" id="sectionMissingBody" style="display:none;">
+          <div class="table-wrap" style="border-radius:0 0 var(--radius) var(--radius);">
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>رقم الأوردر</th><th>العنوان</th><th>النوع</th>
+                    <th colspan="3" class="group-header">⏱️ وقت الطباعة</th>
+                    <th colspan="3" class="group-header">📦 وقت التغليف</th>
+                  </tr>
+                  <tr class="subheader-row">
+                    <th></th><th></th><th></th>
+                    <th>اليوم</th><th>التاريخ</th><th>الوقت</th>
+                    <th>اليوم</th><th>التاريخ</th><th>الوقت</th>
+                  </tr>
+                </thead>
+                <tbody id="missingBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Unexpected orders section — collapsible -->
       <div class="unexpected-section" id="unexpectedSection" style="display:none;">
-        <div class="unexpected-header">
+        <div class="unexpected-header" onclick="toggleSection('sectionUnexpected')" style="cursor:pointer;">
           <span>⚠️ أوردرات موجودة على الأرض ولكن خارج القائمة</span>
           <span class="unexpected-count" id="unexpectedCount">0</span>
           <div style="flex:1;"></div>
-          <button class="btn btn-amber" id="btnLookup" onclick="lookupUnexpected()" style="padding:5px 12px; font-size:12px;">
+          <button class="btn btn-amber" id="btnLookup" onclick="event.stopPropagation(); lookupUnexpected()" style="padding:5px 12px; font-size:12px;">
             🔍 استعلام عن الحالة الفعلية
           </button>
+          <span class="section-collapse-chevron" id="sectionUnexpectedChevron" style="color:var(--amber); margin-right:8px;">▲</span>
         </div>
-        <div id="unexpectedList"></div>
+        <div id="unexpectedList" id="sectionUnexpectedBody"></div>
       </div>
 
     </div><!-- /viewAudit -->
@@ -1101,8 +1216,20 @@ function endAudit() {
   document.getElementById('scannerArea').classList.add('inactive');
   document.getElementById('manualArea').classList.add('inactive');
   document.getElementById('btnExportAudit').style.display = '';
+
+  // Make cards clickable after audit ends
+  ['cardOk','cardWarn','missingCard'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('clickable');
+  });
+  document.getElementById('cardOk').style.cursor      = 'pointer';
+  document.getElementById('cardWarn').style.cursor    = 'pointer';
+  document.getElementById('missingCard').style.cursor = 'pointer';
+
   renderAuditTable();
+  renderSplitTables();
   updateStats();
+
   const total = filteredOrders.length;
   const ok    = filteredOrders.filter(o => confirmedIds.has(o.id)).length;
   showToast(`انتهت المراجعة ✅ ${ok} مضبوط | ❌ ${total-ok} ضائع | ⚠️ ${unexpectedScans.length} خارج القائمة`, 'info');
@@ -1121,6 +1248,14 @@ function resetAuditState() {
   document.getElementById('manualArea').classList.add('inactive');
   document.getElementById('unexpectedSection').style.display = 'none';
   document.getElementById('progressWrap').style.display = 'none';
+  // Hide split sections
+  document.getElementById('sectionOk').style.display      = 'none';
+  document.getElementById('sectionMissing').style.display = 'none';
+  // Reset card styles
+  ['cardOk','cardWarn','missingCard'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.remove('clickable'); el.style.cursor = 'default'; }
+  });
 }
 
 async function lookupUnexpected() {
@@ -1282,9 +1417,102 @@ function handleManualAdd() {
   const parsed = normalizeOrderInput(val);
   if (!parsed) { showToast('قيمة غير صالحة', 'warn'); return; }
 
+  // Resolve the actual order object (handles numericId lookup correctly)
   const order = resolveOrderFromParsed(parsed);
-  const displayName = getDisplayName(parsed, order);
-  processOrderName(displayName);
+
+  if (order) {
+    // Found in allOrders — use the real order.name (e.g. "#1234")
+    processOrderName(order.name);
+  } else {
+    // Not found — use the best display name for the unexpected list
+    const displayName = getDisplayName(parsed, null);
+    processOrderName(displayName);
+  }
+}
+
+/* ── renderSplitTables — builds Ok/Missing tables after audit ends ── */
+function renderSplitTables() {
+  const okOrders      = filteredOrders.filter(o => confirmedIds.has(o.id));
+  const missingOrders = filteredOrders.filter(o => !confirmedIds.has(o.id));
+
+  // ── OK table ──
+  const okBody = document.getElementById('okBody');
+  const sectionOk = document.getElementById('sectionOk');
+  document.getElementById('sectionOkCount').textContent = okOrders.length;
+  if (okOrders.length) {
+    okBody.innerHTML = okOrders.map(o => orderRow(o, false)).join('');
+    sectionOk.style.display = '';
+  } else {
+    sectionOk.style.display = 'none';
+  }
+
+  // ── Missing table ──
+  const missingBody    = document.getElementById('missingBody');
+  const sectionMissing = document.getElementById('sectionMissing');
+  document.getElementById('sectionMissingCount').textContent = missingOrders.length;
+  if (missingOrders.length) {
+    missingBody.innerHTML = missingOrders.map(o => orderRow(o, false)).join('');
+    sectionMissing.style.display = '';
+  } else {
+    sectionMissing.style.display = 'none';
+  }
+
+  // Update sectionAll title to reflect it's the full list
+  document.getElementById('sectionAllTitle').textContent =
+    `📋 كل الأوردرات (${filteredOrders.length})`;
+}
+
+/* ── toggleSection — collapse/expand a section ── */
+function toggleSection(id) {
+  const bodyMap    = { sectionAll: 'sectionAllBody',    sectionOk: 'sectionOkBody',      sectionMissing: 'sectionMissingBody', sectionUnexpected: 'unexpectedList' };
+  const chevronMap = { sectionAll: 'sectionAllChevron', sectionOk: 'sectionOkChevron',   sectionMissing: 'sectionMissingChevron', sectionUnexpected: 'sectionUnexpectedChevron' };
+
+  const bodyEl    = document.getElementById(bodyMap[id]);
+  const chevronEl = document.getElementById(chevronMap[id]);
+  if (!bodyEl) return;
+
+  const isOpen = bodyEl.style.display !== 'none';
+  bodyEl.style.display    = isOpen ? 'none' : '';
+  chevronEl.textContent   = isOpen ? '▼' : '▲';
+}
+
+/* ── jumpToSection — called when a stat card is clicked ── */
+function jumpToSection(target) {
+  if (!auditEnded) return;
+
+  // Map target → section IDs to open/close
+  const map = {
+    ok:      { open: 'sectionOk',      close: ['sectionAll','sectionMissing'] },
+    missing: { open: 'sectionMissing', close: ['sectionAll','sectionOk']      },
+    warn:    { open: 'unexpectedSection', close: [] },
+  };
+  const cfg = map[target];
+  if (!cfg) return;
+
+  // Close others (collapse body)
+  const bodyMap    = { sectionAll: 'sectionAllBody',    sectionOk: 'sectionOkBody',      sectionMissing: 'sectionMissingBody' };
+  const chevronMap = { sectionAll: 'sectionAllChevron', sectionOk: 'sectionOkChevron',   sectionMissing: 'sectionMissingChevron' };
+  cfg.close.forEach(id => {
+    const b = document.getElementById(bodyMap[id]);
+    const c = document.getElementById(chevronMap[id]);
+    if (b) b.style.display = 'none';
+    if (c) c.textContent = '▼';
+  });
+
+  // Open target
+  if (target === 'warn') {
+    const uList = document.getElementById('unexpectedList');
+    const uChev = document.getElementById('sectionUnexpectedChevron');
+    if (uList) uList.style.display = '';
+    if (uChev) uChev.textContent = '▲';
+    document.getElementById('unexpectedSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    const b = document.getElementById(bodyMap[cfg.open]);
+    const c = document.getElementById(chevronMap[cfg.open]);
+    if (b) b.style.display = '';
+    if (c) c.textContent = '▲';
+    document.getElementById(cfg.open)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 // ══════════════════════════════════════════════════════
